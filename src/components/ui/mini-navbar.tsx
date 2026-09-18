@@ -89,7 +89,7 @@ export function Navbar() {
 
   return (
     <header
-      className={`fixed left-1/2 transform -translate-x-1/2 z-[100] flex flex-col items-center backdrop-blur-md backdrop-saturate-150 ${headerShapeClass} border border-white/40 bg-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),_0_8px_32px_rgba(0,0,0,0.08)] w-[calc(100%-2rem)] sm:w-auto transition-all duration-300 ease-in-out ${isScrolled ? 'top-4 px-4 py-2 sm:px-6 sm:py-2.5' : 'top-14 px-6 py-3 sm:px-8 sm:py-3.5'
+      className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-auto flex flex-col items-center backdrop-blur-md backdrop-saturate-150 ${headerShapeClass} border border-white/40 bg-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),_0_8px_32px_rgba(0,0,0,0.08)] w-[calc(100%-2rem)] sm:w-auto transition-all duration-300 ease-in-out ${isScrolled ? 'px-4 py-2 sm:px-6 sm:py-2.5' : 'px-6 py-3 sm:px-8 sm:py-3.5'
         }`}
     >
       <div className={`flex items-center justify-between w-full transition-all duration-300 ${isScrolled ? 'gap-x-6 sm:gap-x-8' : 'gap-x-8 sm:gap-x-12'}`}>

@@ -20,10 +20,13 @@ function TopBar() {
           <Mail className="w-3.5 h-3.5" />
           <span>xenithservices@live.com</span>
         </a>
-        <a href="tel:03332602502" className="flex items-center gap-2 hover:text-[#0a4c7f] transition-colors">
+        <div className="flex items-center gap-2">
           <Phone className="w-3.5 h-3.5" />
-          <span>0333 2602502</span>
-        </a>
+          <div className="flex flex-col gap-0.5 text-xs sm:text-[13px] font-medium leading-tight">
+            <a href="tel:+923332602502" className="hover:text-[#0d88ca] transition-colors">+92 333 2602502</a>
+            <a href="tel:+923340352072" className="hover:text-[#0d88ca] transition-colors">+92 334 0352072</a>
+          </div>
+        </div>
       </div>
       <div className="flex items-center gap-5">
         <a href="https://www.facebook.com/xenith.services" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-[#0d88ca] hover:scale-110 transition-all duration-200 inline-flex items-center justify-center">

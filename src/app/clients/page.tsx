@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Search, Sparkles, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Search, Sparkles, ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/ui/mini-navbar";
 import { allClients, ClientCategory } from "@/data/allClients";
 
@@ -19,7 +19,7 @@ const categories = [
   "Healthcare & Labs",
   "Garments & Apparel",
   "Bakery & Sweets",
-  "Electronics & Retail",
+  "Electronics & Home Appliances",
   "Education",
   "Automobile & Parts",
   "Footwear",
@@ -28,10 +28,122 @@ const categories = [
 
 type CategoryTab = typeof categories[number];
 
+function CategoryFilterBar({
+  categories,
+  selectedCategory,
+  onSelectCategory,
+}: {
+  categories: { name: string; count: number; slug: string }[];
+  selectedCategory: string;
+  onSelectCategory: (slug: string) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showLeft, setShowLeft] = useState(false);
+  const [showRight, setShowRight] = useState(true);
+
+  const checkScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setShowLeft(el.scrollLeft > 10);
+    setShowRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener("resize", checkScroll);
+    return () => window.removeEventListener("resize", checkScroll);
+  }, []);
+
+  const handleScroll = (direction: "left" | "right") => {
+    if (!scrollRef.current) return;
+    const distance = 260;
+    scrollRef.current.scrollBy({
+      left: direction === "left" ? -distance : distance,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <div className="relative flex-1 min-w-0 flex items-center">
+      {/* Left Scroll Button & Fade Mask */}
+      {showLeft && (
+        <div className="absolute left-0 top-0 bottom-0 flex items-center z-20 pointer-events-none">
+          <div className="w-12 h-full bg-gradient-to-r from-[#ebf3fa] to-transparent pointer-events-none" />
+          <button
+            type="button"
+            onClick={() => handleScroll("left")}
+            aria-label="Scroll categories left"
+            className="absolute left-0 pointer-events-auto w-8 h-8 rounded-full bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-md flex items-center justify-center text-slate-700 hover:text-[#0d88ca] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Horizontal Pill Track */}
+      <div
+        ref={scrollRef}
+        onScroll={checkScroll}
+        className="w-full flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 px-1 select-none"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {categories.map((cat) => {
+          const isActive = selectedCategory === cat.slug;
+          return (
+            <button
+              key={cat.slug}
+              type="button"
+              onClick={() => onSelectCategory(cat.slug)}
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer ${
+                isActive
+                  ? "bg-[#0d88ca] text-white shadow-md shadow-[#0d88ca]/25 border border-transparent font-semibold"
+                  : "bg-white/80 text-slate-700 hover:bg-white border border-slate-200/70 hover:border-slate-300"
+              }`}
+            >
+              {cat.name} <span className="opacity-75 font-mono text-xs">({cat.count})</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Right Scroll Button & Fade Mask */}
+      {showRight && (
+        <div className="absolute right-0 top-0 bottom-0 flex items-center z-20 pointer-events-none">
+          <div className="w-12 h-full bg-gradient-to-l from-[#ebf3fa] to-transparent pointer-events-none" />
+          <button
+            type="button"
+            onClick={() => handleScroll("right")}
+            aria-label="Scroll categories right"
+            className="absolute right-0 pointer-events-auto w-8 h-8 rounded-full bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-md flex items-center justify-center text-slate-700 hover:text-[#0d88ca] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ClientDirectoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<CategoryTab>("All");
   const [displayLimit, setDisplayLimit] = useState(24);
+
+  const categoryStats = useMemo(() => {
+    return categories
+      .map((cat) => {
+        const count =
+          cat === "All"
+            ? allClients.length
+            : allClients.filter((c) => c.category === cat).length;
+        return { name: cat, count, slug: cat };
+      })
+      .filter((cat) => cat.count > 0 || cat.name === "All");
+  }, []);
 
   const filteredClients = useMemo(() => {
     return sortedClients.filter(client => {
@@ -109,35 +221,14 @@ export default function ClientDirectoryPage() {
           </div>
 
           {/* Category Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 w-full lg:w-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {categories.map((cat) => {
-              const isActive = activeCategory === cat;
-              // Calculate count
-              const count = cat === "All" 
-                ? allClients.length 
-                : allClients.filter(c => c.category === cat).length;
-              
-              if (count === 0 && cat !== "All") return null;
-
-              return (
-                <button
-                  key={cat}
-                  onClick={() => {
-                    setActiveCategory(cat);
-                    setDisplayLimit(24);
-                  }}
-                  className={`
-                    flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors transition-shadow duration-200 border transform-gpu
-                    ${isActive 
-                      ? 'bg-[#0d88ca] text-white border-[#0d88ca] shadow-[0_4px_12px_rgba(13,136,202,0.3)]' 
-                      : 'bg-white/60 text-slate-600 border-slate-200 hover:bg-white hover:text-[#0a2540] hover:border-slate-300'}
-                  `}
-                >
-                  {cat} <span className={`ml-1.5 opacity-70 text-xs ${isActive ? 'text-white' : ''}`}>({count})</span>
-                </button>
-              );
-            })}
-          </div>
+          <CategoryFilterBar
+            categories={categoryStats}
+            selectedCategory={activeCategory}
+            onSelectCategory={(slug) => {
+              setActiveCategory(slug as CategoryTab);
+              setDisplayLimit(24);
+            }}
+          />
         </div>
 
         {/* Results Grid */}
@@ -206,7 +297,7 @@ export default function ClientDirectoryPage() {
                     </h3>
                     
                     {client.description && (
-                      <p className="mt-2 text-xs text-slate-600 leading-relaxed line-clamp-3 font-normal">
+                      <p className="mt-2 text-xs text-slate-500 line-clamp-2 leading-relaxed">
                         {client.description}
                       </p>
                     )}

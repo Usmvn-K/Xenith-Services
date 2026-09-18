@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   authors: [{ name: "You" }],
 };
 
+import { Footer } from "@/components/Footer";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -18,8 +20,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
-        {children}
+      <body className={`${inter.variable} font-sans antialiased flex flex-col min-h-screen`}>
+        <div className="flex-grow pb-16">
+          {children}
+        </div>
+        <Footer />
       </body>
     </html>
   );

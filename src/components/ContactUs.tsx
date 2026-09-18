@@ -1,9 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
 
 export function ContactUs() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
@@ -14,10 +22,46 @@ export function ContactUs() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
   };
 
-  const handleDirectWhatsApp = () => {
-    const phone = "923332602502";
-    const message = encodeURIComponent("Hello Xenith Services, I would like to inquire about your software and enterprise solutions.");
-    window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !email || !message) return;
+
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          access_key: "6e39bf99-8b0d-4a76-8d1b-9b6822fc7e19",
+          name,
+          email,
+          subject: subject || `Inquiry from ${name} - Xenith Enterprise Desk`,
+          message,
+          from_name: "Xenith Enterprise Inquiries",
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setSubmitStatus('success');
+        setName("");
+        setEmail("");
+        setSubject("");
+        setMessage("");
+        setTimeout(() => setSubmitStatus('idle'), 6000);
+      } else {
+        setSubmitStatus('error');
+      }
+    } catch (error) {
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -82,7 +126,10 @@ export function ContactUs() {
                 </div>
                 <div>
                   <p className="text-xs text-[#475569] font-medium mb-1 uppercase tracking-wider">Phone</p>
-                  <p className="text-sm text-[#0a4c7f] font-medium">0333 2602502</p>
+                  <div className="flex flex-col text-sm font-medium text-slate-800">
+                    <a href="tel:+923332602502" className="hover:text-[#0d88ca] transition-colors">+92 333 2602502</a>
+                    <a href="tel:+923340352072" className="hover:text-[#0d88ca] transition-colors">+92 334 0352072</a>
+                  </div>
                 </div>
               </div>
               
@@ -108,12 +155,15 @@ export function ContactUs() {
             </div>
 
             {/* Contact Form */}
-            <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-5" onSubmit={handleFormSubmit}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
                   <label className="text-sm text-[#0a2540] ml-1 font-medium">Name</label>
                   <input 
                     type="text" 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
                     placeholder="John Doe" 
                     className="w-full bg-white border border-[#0d88ca]/20 rounded-xl px-4 py-3 text-[#0a2540] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0d88ca]/50 focus:border-[#0d88ca]/50 transition-all shadow-inner shadow-[#0d88ca]/5"
                   />
@@ -122,6 +172,9 @@ export function ContactUs() {
                   <label className="text-sm text-[#0a2540] ml-1 font-medium">Your Email</label>
                   <input 
                     type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                     placeholder="john@example.com" 
                     className="w-full bg-white border border-[#0d88ca]/20 rounded-xl px-4 py-3 text-[#0a2540] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0d88ca]/50 focus:border-[#0d88ca]/50 transition-all shadow-inner shadow-[#0d88ca]/5"
                   />
@@ -131,6 +184,8 @@ export function ContactUs() {
                 <label className="text-sm text-[#0a2540] ml-1 font-medium">Subject</label>
                 <input 
                   type="text" 
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
                   placeholder="How can we help you?" 
                   className="w-full bg-white border border-[#0d88ca]/20 rounded-xl px-4 py-3 text-[#0a2540] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0d88ca]/50 focus:border-[#0d88ca]/50 transition-all shadow-inner shadow-[#0d88ca]/5"
                 />
@@ -138,6 +193,9 @@ export function ContactUs() {
               <div className="space-y-1.5">
                 <label className="text-sm text-[#0a2540] ml-1 font-medium">Message</label>
                 <textarea 
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  required
                   placeholder="Tell us about your project..." 
                   rows={4}
                   className="w-full bg-white border border-[#0d88ca]/20 rounded-xl px-4 py-3 text-[#0a2540] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0d88ca]/50 focus:border-[#0d88ca]/50 transition-all resize-none shadow-inner shadow-[#0d88ca]/5"
@@ -147,18 +205,22 @@ export function ContactUs() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                 <button
                   type="submit"
-                  className="w-full py-3.5 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 transition-all duration-200 shadow-sm inline-flex items-center justify-center gap-2 group cursor-pointer"
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 shadow-sm inline-flex items-center justify-center gap-2 group cursor-pointer"
                 >
-                  <span>Send Message Now</span>
-                  <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="7" y1="17" x2="17" y2="7" />
-                    <polyline points="7 7 17 7 17 17" />
-                  </svg>
+                  <span>{isSubmitting ? "Sending..." : "Send Message Now"}</span>
+                  {!isSubmitting && (
+                    <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="7" y1="17" x2="17" y2="7" />
+                      <polyline points="7 7 17 7 17 17" />
+                    </svg>
+                  )}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => window.open(`https://wa.me/923332602502?text=${encodeURIComponent("Hello Xenith Services, I would like to inquire about your software solutions.")}`, "_blank")}
+                <a
+                  href="https://wa.me/923332602502?text=Hello%20Xenith%20Services%2C%20I%20would%20like%20to%20inquire%20about%20your%20Enterprise%20POS%20%26%20Accounting%20solutions."
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-full py-3.5 px-6 rounded-xl font-semibold text-white bg-[#25D366] hover:bg-[#20bd5a] active:scale-[0.99] transition-all duration-200 shadow-sm shadow-emerald-500/20 inline-flex items-center justify-center gap-2.5 cursor-pointer group"
                 >
                   <svg 
@@ -171,8 +233,27 @@ export function ContactUs() {
                   <span className="text-sm font-semibold tracking-tight text-white">
                     Direct WhatsApp
                   </span>
-                </button>
+                </a>
               </div>
+
+              {submitStatus === 'success' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  className="mt-4 text-center text-sm text-emerald-600 bg-emerald-50 rounded-lg py-3 px-4 font-medium border border-emerald-200 shadow-sm"
+                >
+                  ✓ Inquiry received! Our enterprise team will respond shortly.
+                </motion.div>
+              )}
+              {submitStatus === 'error' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  className="mt-4 text-center text-sm text-rose-600 bg-rose-50 rounded-lg py-3 px-4 font-medium border border-rose-200 shadow-sm"
+                >
+                  Failed to send. Please reach out to our team directly via WhatsApp.
+                </motion.div>
+              )}
             </form>
           </motion.div>
         </motion.div>
